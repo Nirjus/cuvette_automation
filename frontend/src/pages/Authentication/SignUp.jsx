@@ -11,11 +11,7 @@ import { useState } from "react";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { signUpUrl } from "@/redux/API_end_points";
-import {
-  auth,
-  RecaptchaVerifier,
-  signInWithPhoneNumber,
-} from "@/utils/firebase";
+
 
 const SignUp = () => {
   const navigate = useNavigate();
@@ -31,38 +27,7 @@ const SignUp = () => {
     handleemployeeSizeChange,
     resetState,
   } = useValidation();
-  const onSignInSubmit = async () => {
-    try {
-      // onCapchaVerifier();
-      const phoneNumber = `+91${value.phoneNumber}`;
-      console.log(phoneNumber);
-      await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier)
-        .then((confirmationResult) => {
-          // SMS sent. Prompt user to enter the code.
-          window.confirmationResult = confirmationResult;
-          toast.success("OTP sent on your Mobile number");
-        })
-        .catch((error) => {
-          console.error("Error during OTP sending: ", error);
-          setErrorMessage("Failed to send OTP. Please try again.");
-        });
-    } catch (error) {
-      console.error("Error during OTP submission: ", error);
-      setErrorMessage("Error occurred while sending OTP.");
-    }
-  };
 
-  function onCapchaVerifier() {
-    // if (!window.recaptchaVerifier) {
-      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'sign-in-button', {
-        'size': 'invisible',
-        'callback': (response) => {
-          // reCAPTCHA solved, allow signInWithPhoneNumber.
-          onSignInSubmit();
-        }
-      });
-    // }
-  }
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -74,7 +39,7 @@ const SignUp = () => {
         !error.phoneNumber
       ) {
         setIsLoading(true);
-        onCapchaVerifier(); // Call to send OTP
+       
         await axios
           .post(
             signUpUrl,
@@ -97,7 +62,7 @@ const SignUp = () => {
               "employeeSize"
             );
             setErrorMessage("");
-            // navigate("/verify-email");
+            navigate("/verify-email");
           })
           .catch((error) => {
             setErrorMessage(error.response.data.message);

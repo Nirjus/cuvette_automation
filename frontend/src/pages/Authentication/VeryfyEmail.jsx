@@ -4,18 +4,22 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import AuthenticationLayout from "../Authentication";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, Mail, Phone } from "lucide-react";
+import { AlertTriangle, Loader2, Mail, Phone } from "lucide-react";
 import { ShowAlert } from "@/components/ui/alertBox";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { registerUrl } from "@/redux/API_end_points";
 import Input from "@/components/ui/Input";
+import { auth, RecaptchaVerifier, signInWithPhoneNumber } from "@/utils/firebase";
 
 const OTP_LENGTH = 6;
 
 const VerifyEmail = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [emailOtp, setEmailOtp] = useState("");
+  const [phoneOTP, setPhoneOTP] = useState("");
+  const [otp, setOtp] = useState("");
+  const [showOtp, setShowOtp] = useState(false);
   const [error, setErrorMessage] = useState("");
   const navigate = useNavigate();
 
@@ -35,7 +39,6 @@ const VerifyEmail = () => {
           .then((res) => {
             toast.success(res.data.message);
             setErrorMessage("");
-            navigate("/login");
           })
           .catch((error) => {
             setErrorMessage(error.response.data.message);
@@ -48,13 +51,43 @@ const VerifyEmail = () => {
       console.log(error);
     }
   };
-
-  // useEffect(() => {
-  //   if (!secureCode) {
-  //     navigate("/signUp", { replace: true });
-  //   }
-  // }, [navigate, secureCode]);
-
+   function onSignUp(){
+    if(!phoneOTP){
+      return;
+    }
+     onCaptchaVerify()
+     const appVerifier = window.recaptchaVerifier;
+     const phoneNumber = "+91" + phoneOTP;
+      signInWithPhoneNumber(auth, phoneNumber, appVerifier)
+    .then((confirmationResult) => {
+      window.confirmationResult = confirmationResult;
+      toast.success("OTP send successfully 👍")
+      setShowOtp(true);
+    }).catch((error) => {
+      // toast.error(error);
+      console.log(error);
+    });
+  }
+  function onCaptchaVerify(){
+    if(!window.recaptchaVerifier){
+      window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        'size': 'invisible',
+        'callback': (response) => {
+         onSignUp()
+        },
+        'expired-callback': () => {}
+      });
+    }
+  }
+  function onOTPVerify(){
+    window.confirmationResult.confirm(otp).then(async (res) => {
+      console.log(res);
+      navigate("/login");
+    }).catch((error) => {
+      console.log(error);
+    })
+    
+  }
   return (
     <motion.div
       initial={{ opacity: 0, y: -50 }}
@@ -73,9 +106,9 @@ const VerifyEmail = () => {
         <div className="p-8">
           <h2 className=" text-3xl mb-1 font-bold text-center">Sign Up</h2>
           <p className=" mb-6 text-center text-gray-500 text-sm">
-            Create you account here
+            Verify to complete registration process
           </p>
-
+          <div id="recaptcha-container" />
           <form onSubmit={handleSubmit}>
             <Input
               icon={Mail}
@@ -92,21 +125,45 @@ const VerifyEmail = () => {
             >
               {isLoading ? "Verifying..." : "Verify"}
             </Button>
-            <Input
+            {
+              showOtp ?   <>
+              <Input
+                 icon={Phone}
+                 type={"number"}
+                 placeholder={"Enter phone OTP"}
+                 value={otp}
+                 onChange={(e) => setOtp(e.target.value)}
+                 error={""}
+               />
+               <Button
+                 className="bg-indigo-500 hover:bg-indigo-600 hover:scale-95 transition shadow-lg duration-200 w-full"
+                 type="button"
+                 onClick={onOTPVerify}
+                 disabled={isLoading}
+               >
+                 {isLoading ? <Loader2 className=" mx-auto w-4 h-4 animate-spin" /> : "Verify"}
+               </Button>
+              </> :  <>
+           <Input
               icon={Phone}
               type={"number"}
-              placeholder={"Enter 6 digits Mobile OTP"}
-              value={emailOtp}
-              onChange={(e) => setEmailOtp(e.target.value)}
+              placeholder={"Enter your mobile no. to get OTP"}
+              value={phoneOTP}
+              onChange={(e) => setPhoneOTP(e.target.value)}
               error={""}
             />
             <Button
               className="bg-indigo-500 hover:bg-indigo-600 hover:scale-95 transition shadow-lg duration-200 w-full"
-              type="submit"
+              type="button"
+              onClick={onSignUp}
               disabled={isLoading}
             >
-              {isLoading ? "Verifying..." : "Verify"}
+              {isLoading ? <Loader2 className=" mx-auto w-4 h-4 animate-spin" /> : "Get OTP"}
             </Button>
+           </>
+            }
+       
+         
           </form>
         </div>
       </div>

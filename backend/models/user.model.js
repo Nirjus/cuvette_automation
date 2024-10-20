@@ -22,6 +22,7 @@ const userSchema = new mongoose.Schema(
     },
     companyName: {
       type: String,
+      unique: true,
       required: [true, "Company name is required"],
       trim: true,
     },

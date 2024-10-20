@@ -30,8 +30,8 @@ export const onBoarding = async (req, res, next) => {
     const payload = { name, email, companyName, phoneNumber, employeeSize };
     const jwtToken = createJWT(payload, jwtSecret, "1h");
     res.cookie("sign_up_token", jwtToken.token, {
-      expires: 60 * 1000,
-      maxAge: 60 * 1000,
+      expires: 1* 60 * 60 * 1000,
+      maxAge: 1* 60 * 60 * 1000,
       secure: true,
       httpOnly: true,
       sameSite: "none",
